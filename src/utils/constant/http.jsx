@@ -1,0 +1,26 @@
+import axios from "axios";
+import { config } from "dotenv";
+
+const http = axios.create({
+    baseURL: "/api",
+    headers:{
+        "Content-Type": "application/json",
+    },
+});
+
+http.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem("token");
+        if(token){
+            //jika berhasil maka token disimpan
+            //token digunakan untuk akses data yang sudah di Authorization
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+         return config;
+    },
+    (error) =>{
+        return Promise.reject(error);
+    }
+);
+
+export default http;

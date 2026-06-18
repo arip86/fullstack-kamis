@@ -1,0 +1,162 @@
+import { useContext, useState } from "react";
+import styles from "./FormStudent.module.css";
+import { createStudent } from "../../utils/constant/studentApi";
+import { StudentContext } from "../../context/StudentContext";
+
+function FormStudent() {
+  // const {fetchStudents } = useContext(StudentContext); 
+  //menghubungkan ke ContextAPI
+  const [formData, setFormData] = useState({
+    name: "",
+    birth_date: "",
+    gender: "L",
+    classes_id: "",
+    photo: null 
+  });
+
+  const [loading, setLoading] = useState(false);
+
+  function handleChange(e) {
+    const { name, value, files } = e.target;
+    setFormData({ 
+      ...formData, 
+      [name]: files ? files[0] : value 
+    });
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!formData.name.trim()) {
+      alert("Nama Lengkap tidak boleh kosong!");
+      return;
+    }
+
+    if (!formData.birth_date) {
+      alert("Tanggal Lahir harus diisi!");
+      return;
+    }
+    if (formData.gender !== "L" && formData.gender !== "P") {
+      alert("Jenis Kelamin yang dipilih tidak valid!");
+      return;
+    }
+    if (!formData.classes_id) {
+      alert("ID Kelas tidak boleh kosong!");
+      return;
+    }
+    if (isNaN(formData.classes_id) || Number(formData.classes_id) <= 0) {
+      alert("ID Kelas harus berupa angka positif!");
+      return;
+    }
+    if (formData.photo && !formData.photo.type.startsWith("image/")) {
+      alert("Berkas yang diunggah harus berupa file gambar (JPG/PNG)!");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const dataToSend = new FormData();
+      dataToSend.append("name", formData.name);
+      dataToSend.append("birth_date", formData.birth_date);
+      dataToSend.append("gender", formData.gender);
+      dataToSend.append("classes_id", formData.classes_id);
+      
+      if (formData.photo) {
+        dataToSend.append("photo", formData.photo);
+      }
+
+      const response = await createStudent(dataToSend);
+      
+      alert("Data siswa berhasil ditambahkan!");
+      console.log("Response backend:", response.data);
+
+      setFormData({
+        name: "",
+        birth_date: "",
+        gender: "L",
+        classes_id: "",
+        photo: null
+      });
+
+      // Reload halaman otomatis agar komponen list mengambil data gambar yang baru
+      // window.location.reload();
+      fetchStudents();
+
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Gagal menambahkan data siswa.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className={styles.container}>
+      <section className={styles.form__section}>
+        <h2>Tambah Siswa Baru</h2>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.form__group}>
+            <label>Nama Lengkap</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Masukkan nama lengkap"
+              disabled={loading}
+            />
+          </div>
+
+          <div className={styles.form__group}>
+            <label>Tanggal Lahir</label>
+            <input
+              type="date"
+              name="birth_date"
+              value={formData.birth_date}
+              onChange={handleChange}
+              disabled={loading}
+            />
+          </div>
+
+          <div className={styles.form__group}>
+            <label>Jenis Kelamin</label>
+            <select name="gender" 
+            value={formData.gender} onChange={handleChange} disabled={loading}>
+              <option value="L">Laki-laki</option> 
+              <option value="P">Perempuan</option>
+            </select>
+          </div>
+
+          <div className={styles.form__group}>
+            <label>ID Kelas (Class ID)</label>
+            <input
+              type="number"
+              name="classes_id"
+              value={formData.classes_id}
+              onChange={handleChange}
+              placeholder="Contoh: 1"
+              disabled={loading}
+            />
+          </div>
+
+          <div className={styles.form__group}>
+            <label>Upload Foto</label>
+            <input
+              type="file"
+              name="photo"
+              accept="image/*"
+              onChange={handleChange}
+              disabled={loading}
+            />
+          </div>
+
+          <button type="submit" className={styles.form__button} disabled={loading}>
+            {loading ? "Menyimpan..." : "Simpan Siswa"}
+          </button>
+        </form>
+      </section>
+    </div>
+  );
+}
+
+export default FormStudent;
