@@ -1,5 +1,5 @@
 import axios from "axios";
-import { config } from "dotenv";
+
 
 const http = axios.create({
     baseURL: "/api",
